@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивный тренажер цифровой грамотности</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="header">
+            <h1>🎓 Интерактивный тренажер цифровой грамотности</h1>
+            <p>Изучайте тему и сразу проверяйте знания с помощью тестов</p>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content">
+            <!-- Экран чата -->
+            <div id="chatScreen" class="screen active">
+                <div class="chat-container">
+                    <!-- История сообщений -->
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                <strong>Помощник:</strong> Здравствуйте! Я помогу вам изучить цифровую грамотность. 
+                                Просто напишите тему, которую хотите изучить (например: "компьютер", "клавиатура", "интернет", "безопасность"), 
+                                и я подготовлю для вас объяснение и тестовый вопрос.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Блок с тестом (появляется только для тестов) -->
+                    <div class="quiz-section" id="quizSection" style="display: none;">
+                        <div class="quiz-header">
+                            <h3>🎯 Проверьте свои знания:</h3>
+                        </div>
+                        <!-- Вопрос теста -->
+                        <div class="quiz-question" id="quizQuestion">
+                            <!-- Вопрос будет вставлен сюда -->
+                        </div>
+                        <!-- Варианты ответов -->
+                        <div class="quiz-options" id="quizOptions">
+                            <!-- Варианты ответов генерируются динамически -->
+                        </div>
+                    </div>
+
+                    <!-- Форма ввода -->
+                    <div class="input-section">
+                        <div class="input-group">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Введите тему для изучения..." 
+                                rows="2"
+                            ></textarea>
+                            <button onclick="sendMessage()" id="sendBtn">
+                                Изучить тему
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            💡 Примеры тем: "компьютер", "клавиатура", "мышь", "интернет", "безопасность"
+                        </div>
+                    </div>
+
+                    <!-- Статус -->
+                    <div id="statusSection" style="display: none;">
+                        <div class="status-message" id="statusMessage"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

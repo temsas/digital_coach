@@ -1,0 +1,4 @@
+flask==2.3.3
+gigachat==0.1.9
+PyPDF2==3.0.1
+python-dotenv==1.0.0
