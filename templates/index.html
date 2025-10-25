@@ -5,66 +5,319 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Интерактивный тренажер цифровой грамотности</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Дополнительные стили для нового дизайна */
+        .new-design {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .trainer-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            margin: 0;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        .header-section p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .chat-container {
+            padding: 0;
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .bot-message {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        
+        .user-message .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot-message .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .input-section {
+            padding: 25px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1em;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        #messageInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        #sendBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        #sendBtn:disabled {
+            background: #ccc;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        
+        .input-hint {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        /* Стили для блока тестов (возвращаем как было) */
+        .quick-topics-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .quick-topics-section h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .topic-chip {
+            padding: 10px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .topic-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            margin: 10px 0;
+            color: #1976d2;
+            font-weight: 500;
+        }
+        
+        /* Стили для экранов тестов */
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Шапка -->
-        <div class="header">
-            <h1>🎓 Интерактивный тренажер цифровой грамотности</h1>
-            <p>Изучайте тему и сразу проверяйте знания с помощью тестов</p>
-        </div>
+    <div class="new-design">
+        <div class="trainer-card">
+            <!-- Шапка -->
+            <div class="header-section">
+                <h1>Интерактивный тренажер цифровой грамотности</h1>
+                <p>Изучайте тему и сразу проверяйте знания с помощью тестов</p>
+            </div>
 
-        <!-- Основной контент -->
-        <div class="main-content">
-            <!-- Экран чата -->
-            <div id="chatScreen" class="screen active">
-                <div class="chat-container">
-                    <!-- История сообщений -->
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="message bot-message">
-                            <div class="message-content">
-                                <strong>Помощник:</strong> Здравствуйте! Я помогу вам изучить цифровую грамотность. 
-                                Просто напишите тему, которую хотите изучить (например: "компьютер", "клавиатура", "интернет", "безопасность"), 
-                                и я подготовлю для вас объяснение и тестовый вопрос.
+            <!-- Основной контент -->
+            <div class="main-content">
+                <!-- Экран чата -->
+                <div id="chatScreen" class="screen active">
+                    <div class="chat-container">
+                        <!-- История сообщений -->
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    <strong>Помощник:</strong> Здравствуйте! Я помогу вам изучить цифровую грамотность. Вы можете изучить одну тему или пройти полноценный тест из 10 вопросов.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Форма ввода -->
+                        <div class="input-section">
+                            <div class="input-group">
+                                <textarea 
+                                    id="messageInput" 
+                                    placeholder="Введите тему для изучения..." 
+                                    rows="2"
+                                ></textarea>
+                                <button onclick="sendMessage()" id="sendBtn">
+                                    Изучить тему
+                                </button>
+                            </div>
+                            <div class="input-hint">
+                                💡 Примеры тем: "компьютер", "клавиатура", "мышь", "интернет", "безопасность"
+                            </div>
+
+                            <!-- Быстрый выбор тем для теста (возвращаем как было) -->
+                            <div class="quick-topics-section">
+                                <h4>🎯 Пройти тест по теме:</h4>
+                                <div class="topics-grid" id="topicsGrid">
+                                    {% for topic in POPULAR_TOPICS %}
+                                    <div class="topic-chip" onclick="startFullTest('{{ topic }}')">
+                                        {{ topic }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="input-hint">
+                                    💡 Нажмите на тему чтобы начать тест из 10 вопросов
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Статус -->
+                        <div id="statusSection" style="display: none;">
+                            <div class="status-message" id="statusMessage"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Экран полного теста -->
+                <div id="fullTestScreen" class="screen" style="display: none;">
+                    <div class="chat-container">
+                        <!-- Теоретическая часть -->
+                        <div class="theory-section" id="theorySection">
+                            <h3>📚 Теоретическая справка</h3>
+                            <div class="theory-content" id="theoryContent"></div>
+                        </div>
+
+                        <!-- Вопросы теста -->
+                        <div class="full-test-section">
+                            <h3>🧩 Тест из 10 вопросов</h3>
+                            <div class="test-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">Вопрос 1 из 10</div>
+                            </div>
+                            
+                            <div class="test-questions" id="testQuestions">
+                                <!-- Вопросы будут вставлены динамически -->
+                            </div>
+
+                            <!-- Кнопки навигации -->
+                            <div class="test-navigation">
+                                <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" disabled>← Назад</button>
+                                <button class="nav-btn" id="nextBtn" onclick="nextQuestion()">Далее →</button>
+                                <button class="submit-btn" id="submitBtn" onclick="submitFullTest()" style="display: none;">Завершить тест</button>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Блок с тестом (появляется только для тестов) -->
-                    <div class="quiz-section" id="quizSection" style="display: none;">
-                        <div class="quiz-header">
-                            <h3>🎯 Проверьте свои знания:</h3>
+                <!-- Экран результатов -->
+                <div id="resultsScreen" class="screen" style="display: none;">
+                    <div class="chat-container">
+                        <div class="results-section">
+                            <h3>📊 Результаты теста</h3>
+                            <div class="score-display" id="scoreDisplay"></div>
+                            <div class="results-details" id="resultsDetails"></div>
+                            <div class="results-actions">
+                                <button class="action-btn" onclick="goToMainScreen()">Вернуться к темам</button>
+                                <button class="action-btn secondary" onclick="retryTest()">Пройти тест заново</button>
+                            </div>
                         </div>
-                        <!-- Вопрос теста -->
-                        <div class="quiz-question" id="quizQuestion">
-                            <!-- Вопрос будет вставлен сюда -->
-                        </div>
-                        <!-- Варианты ответов -->
-                        <div class="quiz-options" id="quizOptions">
-                            <!-- Варианты ответов генерируются динамически -->
-                        </div>
-                    </div>
-
-                    <!-- Форма ввода -->
-                    <div class="input-section">
-                        <div class="input-group">
-                            <textarea 
-                                id="messageInput" 
-                                placeholder="Введите тему для изучения..." 
-                                rows="2"
-                            ></textarea>
-                            <button onclick="sendMessage()" id="sendBtn">
-                                Изучить тему
-                            </button>
-                        </div>
-                        <div class="input-hint">
-                            💡 Примеры тем: "компьютер", "клавиатура", "мышь", "интернет", "безопасность"
-                        </div>
-                    </div>
-
-                    <!-- Статус -->
-                    <div id="statusSection" style="display: none;">
-                        <div class="status-message" id="statusMessage"></div>
                     </div>
                 </div>
             </div>
@@ -72,5 +325,25 @@
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Автоматическое увеличение высоты textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Отправка по Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Фокус на поле ввода при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
 </body>
 </html>

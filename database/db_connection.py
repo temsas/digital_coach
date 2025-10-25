@@ -1,6 +1,9 @@
 import sqlite3
 import os
+import logging
 from config import Config
+
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(self):
@@ -61,30 +64,36 @@ class Database:
             ''')
 
             conn.commit()
-            print("✅ SQLite база данных тренажера инициализирована успешно")
+            logger.info("✅ SQLite база данных тренажера инициализирована успешно")
 
         except Exception as e:
-            print(f"❌ Ошибка инициализации БД: {e}")
+            logger.error(f"❌ Ошибка инициализации БД: {e}")
             raise
         finally:
             cursor.close()
             conn.close()
 
     def save_guide_section(self, title: str, content: str, page: int = None, category: str = None):
-        """Сохранение раздела руководства"""
+        """Сохранение раздела руководства с логированием"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        cursor.execute('''
-            INSERT INTO guide_sections (section_title, section_content, page_number, category)
-            VALUES (?, ?, ?, ?)
-        ''', (title, content, page, category))
+        try:
+            cursor.execute('''
+                INSERT INTO guide_sections (section_title, section_content, page_number, category)
+                VALUES (?, ?, ?, ?)
+            ''', (title, content, page, category))
+            
+            conn.commit()
+            logger.info(f"💾 Сохранен раздел: '{title}' (стр. {page}, {len(content)} символов)")
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка сохранения раздела: {e}")
+        finally:
+            cursor.close()
+            conn.close()
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-    def get_guide_sections(self, limit: int = 20):
+    def get_guide_sections(self, limit: int = 100):
         """Получение разделов руководства"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -153,6 +162,7 @@ class Database:
         conn.commit()
         cursor.close()
         conn.close()
+        logger.info("🗑️ Данные руководства очищены")
 
 
 if __name__ == "__main__":

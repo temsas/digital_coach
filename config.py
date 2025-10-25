@@ -1,9 +1,10 @@
 import os
 
 class Config:
-    SQLITE_DATABASE = "digital_trainer.db"
-    UPLOAD_FOLDER = "uploads"
-    GUIDE_FOLDER = "guide"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    SQLITE_DATABASE = os.path.join(BASE_DIR, "digital_trainer.db")
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+    GUIDE_FOLDER = os.path.join(BASE_DIR, "guide")
     ALLOWED_EXTENSIONS = {'pdf'}
     
     @classmethod
