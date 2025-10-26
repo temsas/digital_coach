@@ -385,15 +385,44 @@ function showResultsScreen(results) {
         </div>
     `;
     
-    // Отображаем детали по вопросам
-     resultsDetails.innerHTML = `
+    // Отображаем детали по вопросам с улучшенным форматированием
+    resultsDetails.innerHTML = `
         <h4>Детали результатов:</h4>
         ${results.results.map((result, index) => `
             <div class="result-item ${result.is_correct ? 'correct' : 'incorrect'}">
                 <div class="result-question">
                     <strong>Вопрос ${index + 1} из 5:</strong> ${result.question}
                 </div>
-                <!-- остальной код -->
+                <div class="result-answer ${result.is_correct ? 'correct-answer' : 'incorrect-answer'}">
+                    <div class="user-answer">
+                        <span class="answer-label">Ваш ответ:</span> 
+                        ${result.user_answer !== null ? 
+                            `<span class="answer-text">${result.options[result.user_answer]}</span>` : 
+                            '<span class="no-answer">Нет ответа</span>'
+                        }
+                        ${result.is_correct ? 
+                            '<span class="result-icon correct-icon">✅ Правильно</span>' : 
+                            '<span class="result-icon incorrect-icon">❌ Неправильно</span>'
+                        }
+                    </div>
+                    ${!result.is_correct ? `
+                        <div class="correct-answer-section">
+                            <div class="correct-answer">
+                                <span class="answer-label">Правильный ответ:</span>
+                                <span class="answer-text correct">${result.options[result.correct_answer]}</span>
+                            </div>
+                            <div class="answer-explanation">
+                                <div class="explanation-title">📚 Пояснение:</div>
+                                <div class="explanation-text">${result.explanation}</div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="answer-explanation positive">
+                            <div class="explanation-title">🎉 Отлично!</div>
+                            <div class="explanation-text">${result.explanation}</div>
+                        </div>
+                    `}
+                </div>
             </div>
         `).join('')}
     `;

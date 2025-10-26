@@ -463,3 +463,149 @@
     margin-right: 8px;
     font-size: 1.1em;
 }
+/* Улучшенные стили для результатов */
+.result-answer {
+    margin: 15px 0;
+    padding: 0;
+}
+
+.user-answer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #6c757d;
+}
+
+.incorrect-answer .user-answer {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.correct-answer .user-answer {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.answer-label {
+    font-weight: 600;
+    color: #495057;
+    margin-right: 8px;
+}
+
+.answer-text {
+    flex: 1;
+    color: #212529;
+}
+
+.answer-text.correct {
+    color: #155724;
+    font-weight: 600;
+}
+
+.no-answer {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.result-icon {
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.correct-icon {
+    color: #28a745;
+}
+
+.incorrect-icon {
+    color: #dc3545;
+}
+
+.correct-answer-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.correct-answer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.answer-explanation {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.answer-explanation.positive {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.explanation-title {
+    font-weight: 600;
+    color: #17a2b8;
+    margin-bottom: 8px;
+    font-size: 1em;
+}
+
+.answer-explanation.positive .explanation-title {
+    color: #28a745;
+}
+
+.explanation-text {
+    color: #495057;
+    line-height: 1.5;
+    font-size: 0.95em;
+}
+
+/* Анимации для появления результатов */
+.result-item {
+    animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Улучшаем отображение для мобильных устройств */
+@media (max-width: 768px) {
+    .user-answer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .result-icon {
+        margin-left: 0;
+        align-self: flex-end;
+    }
+    
+    .correct-answer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .answer-label {
+        min-width: 120px;
+    }
+}
