@@ -347,3 +347,119 @@
         width: 100%;
     }
 }
+/* Стили для форматирования сообщений */
+.message-text {
+    line-height: 1.6;
+}
+
+.message-text p {
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.message-text p:last-child {
+    margin-bottom: 0;
+}
+
+.message-subtitle {
+    font-weight: 600;
+    color: #667eea;
+    margin: 15px 0 8px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #f0f4ff;
+    font-size: 1.05em;
+}
+
+.message-subtitle:first-child {
+    margin-top: 0;
+}
+
+.list-item {
+    padding: 8px 0 8px 20px;
+    position: relative;
+    margin: 5px 0;
+}
+
+.list-item.numbered {
+    padding-left: 25px;
+}
+
+.list-item.numbered::before {
+    content: attr(data-number);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    background: #667eea;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.list-item.bulleted::before {
+    content: "•";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: #667eea;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.highlight {
+    background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%);
+    background: #fff3cd;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 3px solid #ffc107;
+    font-weight: 500;
+}
+
+/* Улучшаем читаемость длинных сообщений */
+.bot-message .message-content {
+    max-width: 85%;
+}
+
+.bot-message .message-text {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Анимация появления сообщений */
+.message {
+    animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Индикатор того, что это обучающий контент */
+.bot-message .message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    color: #667eea;
+    font-size: 0.9em;
+}
+
+.bot-message .message-header::before {
+    content: "🎓";
+    margin-right: 8px;
+    font-size: 1.1em;
+}

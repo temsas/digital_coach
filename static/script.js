@@ -100,14 +100,56 @@ function addMessageToChat(sender, content) {
     const messageDiv = document.createElement('div');
     
     messageDiv.className = `message ${sender}-message`;
-    messageDiv.innerHTML = `
-        <div class="message-content">
-            <strong>${sender === 'user' ? 'Вы' : 'Помощник'}:</strong> ${content}
-        </div>
-    `;
+    
+    if (sender === 'bot') {
+        // Форматируем текст помощника
+        const formattedContent = formatBotMessage(content);
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <strong>Помощник:</strong>
+                </div>
+                <div class="message-text">${formattedContent}</div>
+            </div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <strong>Вы:</strong>
+                </div>
+                <div class="message-text">${escapeHtml(content)}</div>
+            </div>
+        `;
+    }
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function formatBotMessage(text) {
+    let safeText = escapeHtml(text);
+    let formatted = safeText
+        .replace(/^(.*?:)$/gm, '<div class="message-subtitle">$1</div>')
+        .replace(/^(\d+\.\s+.*)$/gm, '<div class="list-item numbered">$1</div>')
+        .replace(/^([-•*]\s+.*)$/gm, '<div class="list-item bulleted">$1</div>')
+        .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>');
+    
+    // Автоматическая нумерация
+    formatted = autoNumberLists(formatted);
+    
+    // Разбиваем на параграфы
+    return formatted.split('\n\n')
+        .map(paragraph => paragraph.trim() ? 
+            (paragraph.includes('class="') ? paragraph : `<p>${paragraph}</p>`) : '')
+        .join('')
+        .replace(/\n/g, '<br>');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function focusInput() {
@@ -117,12 +159,27 @@ function focusInput() {
     }
 }
 
+function autoNumberLists(formattedText) {
+    let numberedText = formattedText;
+    let listCounter = 0;
+    
+    // Нумеруем пронумерованные списки
+    numberedText = numberedText.replace(/<div class="list-item numbered">(\d+\.\s+.*?)<\/div>/g, 
+        function(match, content) {
+            listCounter++;
+            return `<div class="list-item numbered" data-number="${listCounter}">${content.replace(/^\d+\.\s+/, '')}</div>`;
+        }
+    );
+    
+    return numberedText;
+}
+
 // Запуск полного теста
 async function startFullTest(topic) {
     if (isProcessing) return;
 
     isProcessing = true;
-    updateUIForProcessing(true, `Генерирую тест по теме "${topic}"...`);
+    updateUIForProcessing(true, `Генерирую тест из 5 вопросов по теме "${topic}"...`);
 
     try {
         const response = await fetch('/api/generate-full-test', {
@@ -229,7 +286,7 @@ function updateProgress(index) {
     
     const progress = ((index + 1) / currentFullTest.questions.length) * 100;
     progressFill.style.width = `${progress}%`;
-    progressText.textContent = `Вопрос ${index + 1} из ${currentFullTest.questions.length}`;
+    progressText.textContent = `Вопрос ${index + 1} из ${currentFullTest.questions.length}`; // Будет показывать "из 5"
 }
 
 // Обновление кнопок навигации
@@ -329,25 +386,19 @@ function showResultsScreen(results) {
     `;
     
     // Отображаем детали по вопросам
-    resultsDetails.innerHTML = `
+     resultsDetails.innerHTML = `
         <h4>Детали результатов:</h4>
         ${results.results.map((result, index) => `
             <div class="result-item ${result.is_correct ? 'correct' : 'incorrect'}">
                 <div class="result-question">
-                    <strong>Вопрос ${index + 1}:</strong> ${result.question}
+                    <strong>Вопрос ${index + 1} из 5:</strong> ${result.question}
                 </div>
-                <div class="result-answer">
-                    Ваш ответ: ${result.user_answer !== null ? (result.user_answer + 1) : 'Нет ответа'} 
-                    ${result.is_correct ? '✅' : '❌'}
-                    ${!result.is_correct ? ` (Правильный: ${result.correct_answer + 1})` : ''}
-                </div>
-                <div class="result-explanation">
-                    <strong>Объяснение:</strong> ${result.explanation}
-                </div>
+                <!-- остальной код -->
             </div>
         `).join('')}
     `;
 }
+
 
 // Вернуться на главный экран
 function goToMainScreen() {

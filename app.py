@@ -50,7 +50,7 @@ def index():
 
 @app.route('/api/generate-full-test', methods=['POST'])
 def generate_full_test():
-    """Генерация полноценного теста из 10 вопросов по теме"""
+    """Генерация полноценного теста из 5 вопросов по теме"""
     if not GIGACHAT_AVAILABLE:
         return jsonify({
             'status': 'error',
@@ -111,29 +111,29 @@ def generate_contextual_test(topic, relevant_sections):
     }
 
 def generate_contextual_questions(topic, relevant_sections, theory):
-    """Генерация контекстных вопросов по теме"""
+    """Генерация контекстных вопросов по теме - ТЕПЕРЬ 5 ВОПРОСОВ"""
     try:
         # Генерируем вопросы разных типов
-        understanding_questions = generate_question_batch(topic, relevant_sections, theory, "understanding", 5)
-        application_questions = generate_question_batch(topic, relevant_sections, theory, "application", 5)
+        understanding_questions = generate_question_batch(topic, relevant_sections, theory, "understanding", 3)
+        application_questions = generate_question_batch(topic, relevant_sections, theory, "application", 2)
         
         questions = understanding_questions + application_questions
         
         # Если вопросов недостаточно, добавляем резервные
-        if len(questions) < 10:
+        if len(questions) < 5:
             logger.warning(f"⚠️ Сгенерировано только {len(questions)} вопросов, добавляем резервные")
-            for i in range(len(questions), 10):
+            for i in range(len(questions), 5):
                 questions.append(create_meaningful_question(i, topic, relevant_sections))
         
-        return questions[:10]  # Всегда возвращаем 10 вопросов
+        return questions[:5]  # Всегда возвращаем 5 вопросов
         
     except Exception as e:
         logger.error(f"❌ Ошибка генерации контекстных вопросов: {e}")
         # Возвращаем резервные вопросы
-        return [create_meaningful_question(i, topic, relevant_sections) for i in range(10)]
+        return [create_meaningful_question(i, topic, relevant_sections) for i in range(5)]
 
 def generate_test_step_by_step(topic, relevant_sections):
-    """Поэтапная генерация теста - резервный метод"""
+    """Поэтапная генерация теста - резервный метод - ТЕПЕРЬ 5 ВОПРОСОВ"""
     logger.info(f"🔄 Поэтапная генерация теста по теме: {topic}")
     
     try:
@@ -145,27 +145,27 @@ def generate_test_step_by_step(topic, relevant_sections):
         
         # Первая партия вопросов
         try:
-            batch1 = generate_question_batch(topic, relevant_sections, theory, "understanding", 5)
+            batch1 = generate_question_batch(topic, relevant_sections, theory, "understanding", 3)
             questions.extend(batch1)
         except Exception as e:
             logger.error(f"❌ Ошибка первой партии вопросов: {e}")
-            for i in range(len(questions), len(questions) + 5):
+            for i in range(len(questions), len(questions) + 3):
                 questions.append(create_meaningful_question(i, topic, relevant_sections))
         
         # Вторая партия вопросов
         try:
-            batch2 = generate_question_batch(topic, relevant_sections, theory, "application", 5)
+            batch2 = generate_question_batch(topic, relevant_sections, theory, "application", 2)
             questions.extend(batch2)
         except Exception as e:
             logger.error(f"❌ Ошибка второй партии вопросов: {e}")
-            for i in range(len(questions), len(questions) + 5):
+            for i in range(len(questions), len(questions) + 2):
                 questions.append(create_meaningful_question(i, topic, relevant_sections))
         
-        # Обеспечиваем ровно 10 вопросов
-        if len(questions) > 10:
-            questions = questions[:10]
-        elif len(questions) < 10:
-            for i in range(len(questions), 10):
+        # Обеспечиваем ровно 5 вопросов
+        if len(questions) > 5:
+            questions = questions[:5]
+        elif len(questions) < 5:
+            for i in range(len(questions), 5):
                 questions.append(create_meaningful_question(i, topic, relevant_sections))
         
         return {
@@ -247,60 +247,50 @@ def generate_contextual_test(topic, relevant_sections):
         return generate_test_step_by_step(topic, relevant_sections)
 
 def generate_question_batch(topic, relevant_sections, theory, question_type, count):
-    """Генерация партии вопросов определенного типа"""
+    """Генерация партии вопросов определенного типа - УЛУЧШЕННАЯ ВЕРСИЯ"""
     prompt = f"""
 СОЗДАЙ {count} КАЧЕСТВЕННЫХ ВОПРОСОВ ДЛЯ ПРОВЕРКИ ПОНИМАНИЯ ТЕМЫ: "{topic}"
 
 ТЕОРЕТИЧЕСКАЯ СПРАВКА:
 {theory}
 
-ИСХОДНЫЙ ТЕКСТ ИЗ РУКОВОДСТВА:
-{format_sections_for_analysis(relevant_sections)}
-
 ТИП ВОПРОСОВ: {question_type.upper()}
 {"- Вопросы на понимание сути и концепций" if question_type == "understanding" else "- Вопросы на применение знаний в практических ситуациях"}
 
-ТРЕБОВАНИЯ К ВОПРОСАМ:
-1. Каждый вопрос должен проверять ПОНИМАНИЕ, а не память
-2. Вопросы должны быть ОСМЫСЛЕННЫМИ и связанными с реальным применением
-3. Варианты ответов должны быть ПРАВДОПОДОБНЫМИ и РАЗНЫМИ
-4. Избегай вопросов с очевидными ответами
-5. Используй ЕСТЕСТВЕННЫЕ формулировки
+ВАЖНЫЕ ПРАВИЛА:
+1. ВОЗВРАЩАЙ ТОЛЬКО ВАЛИДНЫЙ JSON БЕЗ ЛЮБЫХ ДОПОЛНИТЕЛЬНЫХ ТЕКСТОВ
+2. correct_answer ДОЛЖЕН БЫТЬ ЧИСЛОМ от 0 до 3
+3. options ДОЛЖЕН СОДЕРЖАТЬ РОВНО 4 ВАРИАНТА
+4. Все поля ОБЯЗАТЕЛЬНЫ
 
-ПРИМЕРЫ ПЛОХИХ ВОПРОСОВ (НЕ ДЕЛАЙ ТАК):
-- "Сколько кнопок на мышке?"
-- "Какого цвета может быть монитор?"
-- "Что такое процессор?" (слишком общий)
-
-ПРИМЕРЫ ХОРОШИХ ВОПРОСОВ (ДЕЛАЙ ТАК):
-- "Что нужно сделать в первую очередь, если компьютер не включается?"
-- "Какой способ хранения паролей считается наиболее безопасным?"
-- "Для чего используется клавиша Enter при работе с текстом?"
-
-ФОРМАТ ОТВЕТА (JSON):
+ФОРМАТ ОТВЕТА (ТОЛЬКО JSON):
 {{
     "questions": [
         {{
-            "question": "Осмысленный вопрос на понимание...",
-            "options": ["Правильный осмысленный ответ", "Неправильный, но правдоподобный ответ", "Еще один неправильный вариант", "Очевидно неверный вариант"],
+            "question": "Текст вопроса...",
+            "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
             "correct_answer": 0,
-            "explanation": "Понятное объяснение, почему этот ответ правильный"
+            "explanation": "Объяснение правильного ответа"
         }}
     ]
 }}
+
+НЕ ДОБАВЛЯЙ КОММЕНТАРИИ, ОБЪЯСНЕНИЯ ИЛИ ДРУГОЙ ТЕКСТ ВНЕ JSON СТРУКТУРЫ!
 """
     
     try:
         response = gigachat_service.client.chat(prompt)
         content = response.choices[0].message.content
         
-        # Парсим JSON
-        questions_data = parse_questions_json(content)
-        return questions_data[:count]
+        # Удаляем возможные markdown-обертки
+        content = re.sub(r'^```json\s*', '', content)
+        content = re.sub(r'\s*```$', '', content)
+        
+        return parse_questions_json(content)
         
     except Exception as e:
         logger.error(f"❌ Ошибка генерации вопросов типа {question_type}: {e}")
-        return [create_meaningful_question(i, topic, relevant_sections) for i in range(count)]
+        return []
 
 def format_sections_for_analysis(relevant_sections):
     """Форматирование разделов для контекстного анализа"""
@@ -335,35 +325,60 @@ def clean_text_for_context(text):
     return ' '.join(clean_lines[:500])  # Ограничиваем длину
 
 def parse_questions_json(content):
-    """Парсинг JSON с вопросами"""
+    """Парсинг JSON с вопросами - УЛУЧШЕННАЯ ВЕРСИЯ"""
     try:
-        # Очищаем JSON
+        # Очищаем JSON более тщательно
         cleaned = clean_json_string(content)
         
-        # Ищем JSON структуру
-        start = cleaned.find('{')
-        end = cleaned.rfind('}') + 1
+        # Удаляем возможные markdown-блоки кода
+        cleaned = re.sub(r'```json\s*', '', cleaned)
+        cleaned = re.sub(r'```\s*', '', cleaned)
         
-        if start == -1 or end == 0:
+        # Ищем JSON структуру - более надежный метод
+        json_pattern = r'\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\}'
+        matches = re.findall(json_pattern, cleaned, re.DOTALL)
+        
+        if not matches:
+            logger.warning("❌ JSON структура не найдена в ответе")
             return []
             
-        json_str = cleaned[start:end]
-        data = json.loads(json_str)
+        # Пробуем каждый найденный JSON
+        for json_str in matches:
+            try:
+                # Дополнительная очистка
+                json_str = json_str.strip()
+                if not json_str.startswith('{'):
+                    continue
+                    
+                data = json.loads(json_str)
+                
+                # Проверяем структуру
+                if 'questions' in data and isinstance(data['questions'], list):
+                    questions = data['questions']
+                    validated_questions = []
+                    
+                    for i, q in enumerate(questions):
+                        if validate_question_quality(q):
+                            validated_questions.append({
+                                'id': i,
+                                'question': q['question'],
+                                'options': q['options'][:4],  # Обеспечиваем 4 варианта
+                                'correct_answer': min(q.get('correct_answer', 0), 3),  # Обеспечиваем корректный индекс
+                                'explanation': q.get('explanation', 'Объяснение основано на материалах руководства.')
+                            })
+                    
+                    logger.info(f"✅ Успешно распарсено {len(validated_questions)} вопросов")
+                    return validated_questions
+                    
+            except json.JSONDecodeError as e:
+                logger.warning(f"⚠️ Ошибка декодирования JSON: {e}")
+                continue
+            except Exception as e:
+                logger.warning(f"⚠️ Ошибка обработки JSON: {e}")
+                continue
         
-        questions = data.get('questions', [])
-        validated_questions = []
-        
-        for i, q in enumerate(questions):
-            if validate_question_quality(q):
-                validated_questions.append({
-                    'id': i,
-                    'question': q['question'],
-                    'options': q['options'],
-                    'correct_answer': q.get('correct_answer', 0),
-                    'explanation': q.get('explanation', 'Объяснение основано на материалах руководства.')
-                })
-        
-        return validated_questions
+        logger.error("❌ Ни один JSON не прошел валидацию")
+        return []
         
     except Exception as e:
         logger.error(f"❌ Ошибка парсинга вопросов: {e}")
@@ -430,6 +445,22 @@ def is_low_quality_theory(theory):
         return True
     
     return False
+
+def create_robust_question_batch(topic, relevant_sections, theory, question_type, count):
+    """Создание надежной партии вопросов с обработкой ошибок"""
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            questions = generate_question_batch(topic, relevant_sections, theory, question_type, count)
+            if questions and len(questions) >= count:
+                return questions
+        except Exception as e:
+            logger.warning(f"⚠️ Попытка {attempt + 1} не удалась: {e}")
+            if attempt == max_retries - 1:
+                logger.error(f"❌ Все попытки создания вопросов типа {question_type} провалились")
+    
+    # Резервные вопросы
+    return [create_meaningful_question(i, topic, relevant_sections) for i in range(count)]
 
 def create_meaningful_theory(topic, relevant_sections):
     """Создание осмысленной теоретической справки вручную"""
@@ -779,7 +810,7 @@ def create_full_test_prompt(topic, relevant_sections):
     concrete_content = "\n\n".join(concrete_texts)
     
     prompt = f"""
-    ТЫ - ЭКСПЕРТ ПО СОЗДАНИЮ ТЕСТОВ. СОЗДАЙ ТЕСТ ИЗ 10 ВОПРОСОВ ПО ТЕМЕ "{topic.upper()}".
+    ТЫ - ЭКСПЕРТ ПО СОЗДАНИЮ ТЕСТОВ. СОЗДАЙ ТЕСТ ИЗ 5 ВОПРОСОВ ПО ТЕМЕ "{topic.upper()}".
 
     ИСПОЛЬЗУЙ ТОЛЬКО ЭТУ ИНФОРМАЦИЮ ИЗ РУКОВОДСТВА:
 
@@ -879,14 +910,11 @@ def parse_learning_response(response, topic, relevant_sections):
         return create_quality_explanation(topic, relevant_sections), create_quality_quiz(topic, relevant_sections)
 
 def parse_full_test_response(response, topic, relevant_sections):
-    """Парсинг ответа для полного теста - УЛУЧШЕННАЯ ВЕРСИЯ"""
+    """Парсинг ответа для полного теста - УЛУЧШЕННАЯ ВЕРСИЯ - ТЕПЕРЬ 5 ВОПРОСОВ"""
     try:
         cleaned_response = response.strip()
-        
-        # Исправляем "умные" кавычки
         cleaned_response = clean_json_string(cleaned_response)
         
-        # Пытаемся найти JSON разными способами
         json_data = extract_json_from_text(cleaned_response)
         
         if not json_data:
@@ -902,7 +930,7 @@ def parse_full_test_response(response, topic, relevant_sections):
         
         # Проверяем и исправляем вопросы
         validated_questions = []
-        for i, question in enumerate(questions[:10]):  # Берем максимум 10 вопросов
+        for i, question in enumerate(questions[:5]):  # Берем максимум 5 вопросов
             try:
                 validated_question = validate_question(question, i, topic, relevant_sections)
                 if validated_question:
@@ -911,8 +939,8 @@ def parse_full_test_response(response, topic, relevant_sections):
                 logger.error(f"❌ Ошибка валидации вопроса {i}: {e}")
                 continue
         
-        # Если вопросов меньше 10, добавляем качественные вопросы
-        while len(validated_questions) < 10:
+        # Если вопросов меньше 5, добавляем качественные вопросы
+        while len(validated_questions) < 5:  # Изменили с 10 на 5
             i = len(validated_questions)
             quality_question = create_quality_question(i, topic, relevant_sections)
             validated_questions.append(quality_question)
@@ -920,7 +948,7 @@ def parse_full_test_response(response, topic, relevant_sections):
         test_data = {
             'topic': topic,
             'theory': theory,
-            'questions': validated_questions[:10]  # Точно 10 вопросов
+            'questions': validated_questions[:5]  # Точно 5 вопросов
         }
         
         logger.info(f"✅ Успешно создано {len(validated_questions)} вопросов")
@@ -929,7 +957,7 @@ def parse_full_test_response(response, topic, relevant_sections):
     except Exception as e:
         logger.error(f"❌ Ошибка парсинга полного теста: {e}")
         return create_quality_full_test(topic, relevant_sections)
-
+    
 def extract_json_from_text(text):
     """Извлечение JSON из текста разными методами"""
     methods = [
@@ -1038,9 +1066,9 @@ def validate_question(question, question_id, topic, relevant_sections):
     }
 
 def create_quality_full_test(topic, relevant_sections):
-    """Создание качественного теста при ошибках парсинга"""
+    """Создание качественного теста при ошибках парсинга - ТЕПЕРЬ 5 ВОПРОСОВ"""
     questions = []
-    for i in range(10):
+    for i in range(5):  # Изменили с 10 на 5
         questions.append(create_quality_question(i, topic, relevant_sections))
     
     return {
@@ -1251,7 +1279,7 @@ def debug_sections():
             'content_preview': section['section_content'][:200] + '...',
             'page': section['page_number'],
             'category': section['category'],
-            'content_length': len(ssection['section_content'])
+            'content_length': len(section['section_content'])
         })
     
     return jsonify({
@@ -1335,40 +1363,37 @@ def learn_topic():
         }), 500
 
 def generate_deep_context_explanation(topic, relevant_sections):
-    """Генерация глубокого контекстного объяснения - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
-    
-    # Сначала анализируем контент, чтобы понять специфику темы
-    topic_analysis = analyze_topic_specifics(topic, relevant_sections)
+    """Генерация глубокого контекстного объяснения - С ФОРМАТИРОВАНИЕМ"""
     
     prompt = f"""
-ТЫ - ЭКСПЕРТ-ПРЕПОДАВАТЕЛЬ ПО ЦИФРОВОЙ ГРАМОТНОСТИ. ПРОАНАЛИЗИРУЙ РУКОВОДСТВО И ДАЙ КАЧЕСТВЕННОЕ ОБЪЯСНЕНИЕ ПО ТЕМЕ: "{topic.upper()}"
+ТЫ - ЭКСПЕРТ-ПРЕПОДАВАТЕЛЬ ПО ЦИФРОВОЙ ГРАМОТНОСТИ. ДАЙ КАЧЕСТВЕННОЕ ОБЪЯСНЕНИЕ ПО ТЕМЕ: "{topic.upper()}"
 
 КОНКРЕТНЫЙ МАТЕРИАЛ ИЗ РУКОВОДСТВА:
 {format_concrete_sections(relevant_sections)}
-
-АНАЛИЗ ТЕМЫ: {topic_analysis}
-
 ТВОЯ ЗАДАЧА:
-1. ПРОЧИТАЙ и ПРОАНАЛИЗИРУЙ КАЖДЫЙ раздел руководства
-2. ВЫДЕЛИ КЛЮЧЕВУЮ ИНФОРМАЦИЮ именно по теме "{topic}"
-3. СОСТАВЬ УГЛУБЛЕННОЕ ОБЪЯСНЕНИЕ, которое:
-   - Объясняет КОНКРЕТНО, как работает {topic}
-   - Показывает ПРАКТИЧЕСКОЕ ПРИМЕНЕНИЕ
-   - Дает ПОЛЕЗНЫЕ СОВЕТЫ из руководства
-   - Объясняет, КАК ИМЕННО это использовать
-   - Использует ПРОСТОЙ и ПОНЯТНЫЙ язык
+СОСТАВЬ СТРУКТУРИРОВАННОЕ ОБЪЯСНЕНИЕ С ЧЕТКОЙ СТРУКТУРОЙ:
 
-ОСОБЫЕ ТРЕБОВАНИЯ:
-- ОСНОВЫВАЙСЯ ТОЛЬКО на информации из руководства выше
-- НЕ используй общие фразы вроде "это важно" или "это полезно"
-- ДАЙ КОНКРЕТНЫЕ примеры ИЗ РУКОВОДСТВА
-- ОБЪЯСНИ, КАК ИМЕННО применять эти знания
+Основная концепция:
+- Кратко объясни суть темы
 
-ПЛОХОЙ ПРИМЕР (НЕ ДЕЛАЙ ТАК):
-"Мышь - это важное устройство. Она помогает работать с компьютером. Это полезно для пользователей."
+Как это работает:
+- Опиши механизм работы
+- Используй конкретные примеры из руководства
 
-ХОРОШИЙ ПРИМЕР (ДЕЛАЙ ТАК):
-"Компьютерная мышь в руководстве описывается как основное устройство для управления курсором. Согласно разделу о работе с Windows, левая кнопка мыши используется для выбора элементов, а правая - для вызова контекстного меню. В руководстве рекомендуется держать мышь так, чтобы указательный палец лежал на левой кнопке, а средний - на правой. Для прокрутки страниц нужно использовать колесико мыши, расположенное между кнопками. При работе с текстом двойной щелчок левой кнопкой выделяет слово, а тройной - абзац."
+Практическое применение:
+- Как именно использовать на практике
+- Пошаговые рекомендации
+
+Важные моменты:
+- Ключевые аспекты для запоминания
+- Частые ошибки и как их избежать
+
+ТРЕБОВАНИЯ К ФОРМАТУ:
+- Используй заголовки с двоеточием в конце
+- Используй маркированные списки через дефис
+- Выделяй **важные термины** двойными звездочками
+- Разделяй блоки пустыми строками
+- Давай конкретные примеры из руководства
 
 ОТВЕЧАЙ ТОЛЬКО ТЕКСТОМ ОБЪЯСНЕНИЯ, без вступлений и заключений.
 """
