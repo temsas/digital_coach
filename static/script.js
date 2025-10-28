@@ -706,6 +706,59 @@ function updateUIForProcessing(processing, message = '') {
     }
 }
 
+// Выбор темы из быстрого доступа
+function selectTopic(topic) {
+    if (isProcessing) return;
+    
+    const input = document.getElementById('messageInput');
+    input.value = topic;
+    
+    // Добавляем сообщение пользователя в чат
+    addMessageToChat('user', `Хочу изучить тему: "${topic}"`);
+    input.value = '';
+    
+    // Сбрасываем высоту textarea
+    input.style.height = 'auto';
+    
+    // Отправляем запрос на сервер
+    sendTopicRequest(topic);
+}
+
+// Отправка запроса по выбранной теме
+async function sendTopicRequest(topic) {
+    isProcessing = true;
+    updateUIForProcessing(true, `🔍 Ищу информацию по теме "${topic}"...`);
+    
+    try {
+        const response = await fetch('/api/learn-topic', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: topic
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Добавляем объяснение помощника
+            addMessageToChat('bot', data.explanation);
+        } else {
+            throw new Error(data.error || 'Неизвестная ошибка');
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка отправки сообщения:', error);
+        addMessageToChat('bot', '❌ ' + (error.message || 'Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.'));
+    } finally {
+        isProcessing = false;
+        updateUIForProcessing(false);
+        focusInput();
+    }
+}
+
 // Отправка по Enter (без Shift)
 document.getElementById('messageInput').addEventListener('keypress', function(event) {
     if (event.key === 'Enter' && !event.shiftKey) {

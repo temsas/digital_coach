@@ -7,6 +7,7 @@ class Config:
     GUIDE_FOLDER = os.path.join(BASE_DIR, "guide")
     ALLOWED_EXTENSIONS = {'pdf'}
     
+    
     @classmethod
     def init_directories(cls):
         """Создание необходимых директорий"""

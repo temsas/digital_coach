@@ -894,3 +894,40 @@
     display: block;
     margin-bottom: 0.5em;
 }
+
+/* Стили для тематических блоков */
+.topics-category {
+    margin-bottom: 20px;
+}
+
+.topics-category h4 {
+    color: #667eea;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topics-category h4::before {
+    font-size: 1.2em;
+}
+
+.cyber-security h4::before {
+    content: "🔒";
+}
+
+.digital-literacy h4::before {
+    content: "💻";
+}
+
+/* Адаптивность для тематических блоков */
+@media (max-width: 768px) {
+    .topics-category {
+        margin-bottom: 15px;
+    }
+    
+    .topics-category h4 {
+        font-size: 1em;
+    }
+}
