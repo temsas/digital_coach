@@ -609,3 +609,288 @@
         min-width: 120px;
     }
 }
+/* Улучшенные стили для кнопок тем */
+.topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.topic-chip {
+    padding: 15px 10px;
+    background: white;
+    border: 2px solid;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Индивидуальные цвета для каждой темы */
+.topic-chip:nth-child(1) {
+    border-color: #667eea;
+    color: #667eea;
+}
+.topic-chip:nth-child(1):hover {
+    background: #667eea;
+    color: white;
+}
+
+.topic-chip:nth-child(2) {
+    border-color: #4facfe;
+    color: #4facfe;
+}
+.topic-chip:nth-child(2):hover {
+    background: #4facfe;
+    color: white;
+}
+
+.topic-chip:nth-child(3) {
+    border-color: #f093fb;
+    color: #f093fb;
+}
+.topic-chip:nth-child(3):hover {
+    background: #f093fb;
+    color: white;
+}
+
+.topic-chip:nth-child(4) {
+    border-color: #43e97b;
+    color: #43e97b;
+}
+.topic-chip:nth-child(4):hover {
+    background: #43e97b;
+    color: white;
+}
+
+.topic-chip:nth-child(5) {
+    border-color: #ff9a9e;
+    color: #ff9a9e;
+}
+.topic-chip:nth-child(5):hover {
+    background: #ff9a9e;
+    color: white;
+}
+
+.topic-chip:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.explanation-content {
+    line-height: 1.7;
+    font-size: 16px;
+    color: #2d3748;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+.explanation-content p {
+    margin-bottom: 1.2em;
+    text-align: left;
+}
+
+.explanation-content ul, .explanation-content ol {
+    margin-bottom: 1.2em;
+    padding-left: 2em;
+}
+
+.explanation-content li {
+    margin-bottom: 0.5em;
+    line-height: 1.6;
+}
+
+.explanation-content strong {
+    color: #2c5aa0;
+    font-weight: 600;
+}
+
+/* Стили для эмодзи */
+.explanation-content {
+    font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI', sans-serif;
+}
+
+/* Отступы между абзацами */
+.explanation-content div {
+    margin-bottom: 1.5em;
+}
+
+/* Стили для заголовков с эмодзи */
+.explanation-content .emoji-heading {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #2c5aa0;
+    margin-bottom: 0.8em;
+    display: flex;
+    align-items: center;
+}
+
+.explanation-content .emoji-heading::before {
+    margin-right: 0.5em;
+    font-size: 1.2em;
+}
+
+/* Белый фон и тени для карточек */
+.explanation-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2em;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1.5em;
+}
+
+/* Анимация появления */
+.explanation-content {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* Улучшенные стили для форматирования текста */
+.message-text {
+    line-height: 1.7;
+    font-size: 16px;
+    color: #2d3748;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+.message-text p {
+    margin-bottom: 1.2em;
+    text-align: left;
+    line-height: 1.6;
+}
+
+.message-text .emoji-heading {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #2c5aa0;
+    margin: 1.5em 0 0.8em 0;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid #f0f4ff;
+    display: flex;
+    align-items: center;
+}
+
+.message-text .emoji-heading::before {
+    margin-right: 0.5em;
+    font-size: 1.2em;
+}
+
+.message-subtitle {
+    font-weight: 600;
+    color: #667eea;
+    margin: 1.5em 0 0.8em 0;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 1.05em;
+}
+
+.list-item {
+    padding: 8px 0 8px 25px;
+    position: relative;
+    margin: 5px 0;
+    line-height: 1.5;
+}
+
+.list-item.numbered::before {
+    content: attr(data-number);
+    position: absolute;
+    left: 0;
+    top: 8px;
+    background: #667eea;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.list-item.bulleted::before {
+    content: "•";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: #667eea;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.highlight {
+    background: #fff3cd;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border-left: 3px solid #ffc107;
+    font-weight: 500;
+    color: #856404;
+}
+
+/* Улучшаем читаемость длинных сообщений */
+.bot-message .message-content {
+    max-width: 90%;
+}
+
+.bot-message .message-text {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Индикатор того, что это обучающий контент */
+.bot-message .message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    color: #667eea;
+    font-size: 0.9em;
+}
+
+.bot-message .message-header::before {
+    content: "🎓";
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* Анимация появления сообщений */
+.message {
+    animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Убедимся, что переносы строк работают */
+.message-text br {
+    content: "";
+    display: block;
+    margin-bottom: 0.5em;
+}

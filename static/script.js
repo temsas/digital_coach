@@ -129,21 +129,71 @@ function addMessageToChat(sender, content) {
 
 function formatBotMessage(text) {
     let safeText = escapeHtml(text);
-    let formatted = safeText
+    
+    // Сначала обрабатываем абзацы - разбиваем по двойным переносам строк
+    let formatted = processParagraphs(safeText);
+    
+    // Затем применяем остальное форматирование
+    formatted = formatted
         .replace(/^(.*?:)$/gm, '<div class="message-subtitle">$1</div>')
         .replace(/^(\d+\.\s+.*)$/gm, '<div class="list-item numbered">$1</div>')
         .replace(/^([-•*]\s+.*)$/gm, '<div class="list-item bulleted">$1</div>')
-        .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>');
+        .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')
+        .replace(/\n/g, '<br>');
     
     // Автоматическая нумерация
     formatted = autoNumberLists(formatted);
     
-    // Разбиваем на параграфы
-    return formatted.split('\n\n')
-        .map(paragraph => paragraph.trim() ? 
-            (paragraph.includes('class="') ? paragraph : `<p>${paragraph}</p>`) : '')
-        .join('')
-        .replace(/\n/g, '<br>');
+    return formatted;
+}
+
+function processParagraphs(text) {
+    // Разбиваем текст на абзацы по двойным переносам строк
+    const paragraphs = text.split('\n\n');
+    let result = '';
+    
+    paragraphs.forEach(paragraph => {
+        if (paragraph.trim()) {
+            // Очищаем абзац от лишних пробелов
+            const cleanParagraph = paragraph.trim();
+            
+            // Проверяем, является ли абзац заголовком (содержит эмодзи и жирный текст)
+            if (cleanParagraph.match(/[🎯💡📚⚠️✅🌟📖🛠️].*\*\*.*\*\*/)) {
+                result += `<div class="emoji-heading">${cleanParagraph}</div>`;
+            } 
+            // Проверяем, является ли абзац подзаголовком
+            else if (cleanParagraph.endsWith(':')) {
+                result += `<div class="message-subtitle">${cleanParagraph}</div>`;
+            }
+            // Обычный абзац
+            else {
+                result += `<p>${cleanParagraph}</p>`;
+            }
+        }
+    });
+    
+    return result;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function autoNumberLists(formattedText) {
+    let numberedText = formattedText;
+    let listCounter = 0;
+    
+    // Нумеруем пронумерованные списки
+    numberedText = numberedText.replace(/<div class="list-item numbered">(\d+\.\s+.*?)<\/div>/g, 
+        function(match, content) {
+            listCounter++;
+            return `<div class="list-item numbered" data-number="${listCounter}">${content.replace(/^\d+\.\s+/, '')}</div>`;
+        }
+    );
+    
+    return numberedText;
 }
 
 function escapeHtml(text) {
@@ -222,8 +272,10 @@ function showFullTestScreen() {
     document.getElementById('fullTestScreen').classList.add('active');
     document.getElementById('fullTestScreen').style.display = 'block';
     
-    // Показываем теорию
-    document.getElementById('theoryContent').innerHTML = currentFullTest.theory;
+    // Форматируем и показываем теорию
+    const theoryContent = document.getElementById('theoryContent');
+    const formattedTheory = formatBotMessage(currentFullTest.theory);
+    theoryContent.innerHTML = formattedTheory;
     
     // Показываем первый вопрос
     showQuestion(0);
@@ -428,6 +480,27 @@ function showResultsScreen(results) {
     `;
 }
 
+// В вашем JavaScript коде при отображении объяснения:
+function displayExplanation(explanation) {
+    const container = document.getElementById('explanation-container');
+    
+    // Разбиваем текст на абзацы и добавляем HTML разметку
+    const paragraphs = explanation.split('\n\n');
+    let html = '';
+    
+    paragraphs.forEach(paragraph => {
+        if (paragraph.trim()) {
+            // Проверяем, является ли абзац заголовком (содержит эмодзи и жирный текст)
+            if (paragraph.match(/[🎯💡📚⚠️✅🌟📖🛠️].*\*\*.*\*\*/)) {
+                html += `<div class="emoji-heading">${paragraph}</div>`;
+            } else {
+                html += `<p>${paragraph}</p>`;
+            }
+        }
+    });
+    
+    container.innerHTML = html;
+}
 
 // Вернуться на главный экран
 function goToMainScreen() {
@@ -582,11 +655,30 @@ function addMessageToChat(sender, content) {
     const messageDiv = document.createElement('div');
     
     messageDiv.className = `message ${sender}-message`;
-    messageDiv.innerHTML = `
-        <div class="message-content">
-            <strong>${sender === 'user' ? 'Вы' : 'Помощник'}:</strong> ${content}
-        </div>
-    `;
+    
+    if (sender === 'bot') {
+        // Форматируем текст помощника с улучшенной обработкой
+        const formattedContent = formatBotMessage(content);
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <strong>Помощник:</strong>
+                </div>
+                <div class="message-text">${formattedContent}</div>
+            </div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <strong>Вы:</strong>
+                </div>
+                <div class="message-text">
+                    <p>${escapeHtml(content)}</p>
+                </div>
+            </div>
+        `;
+    }
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
