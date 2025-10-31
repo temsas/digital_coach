@@ -19,7 +19,10 @@ class Database:
         cursor = conn.cursor()
 
         try:
-            # Таблица для разделов руководства
+            # УДАЛЯЕМ старую таблицу и создаем новую с полем guide_source
+            cursor.execute('DROP TABLE IF EXISTS guide_sections')
+            
+            # Таблица для разделов руководства С guide_source
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS guide_sections (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +30,7 @@ class Database:
                     section_content TEXT NOT NULL,
                     page_number INTEGER,
                     category TEXT,
+                    guide_source TEXT,  -- ДОБАВЛЕНО ПОЛЕ ДЛЯ ИСТОЧНИКА
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -41,6 +45,7 @@ class Database:
                     options_json TEXT NOT NULL,
                     correct_answer INTEGER NOT NULL,
                     explanation TEXT NOT NULL,
+                    guide_source TEXT,
                     source_section_id INTEGER,
                     difficulty_level TEXT DEFAULT 'beginner',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -73,19 +78,19 @@ class Database:
             cursor.close()
             conn.close()
 
-    def save_guide_section(self, title: str, content: str, page: int = None, category: str = None):
-        """Сохранение раздела руководства с логированием"""
+    def save_guide_section(self, title: str, content: str, page: int = None, category: str = None, guide_source: str = None):
+        """Сохранение раздела руководства с логированием И guide_source"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
         try:
             cursor.execute('''
-                INSERT INTO guide_sections (section_title, section_content, page_number, category)
-                VALUES (?, ?, ?, ?)
-            ''', (title, content, page, category))
+                INSERT INTO guide_sections (section_title, section_content, page_number, category, guide_source)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (title, content, page, category, guide_source))
             
             conn.commit()
-            logger.info(f"💾 Сохранен раздел: '{title}' (стр. {page}, {len(content)} символов)")
+            logger.info(f"💾 Сохранен раздел: '{title}' (источник: {guide_source}, стр. {page}, {len(content)} символов)")
             
         except Exception as e:
             logger.error(f"❌ Ошибка сохранения раздела: {e}")
@@ -94,12 +99,12 @@ class Database:
             conn.close()
 
     def get_guide_sections(self, limit: int = 100):
-        """Получение разделов руководства"""
+        """Получение разделов руководства С guide_source"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, section_title, section_content, page_number, category 
+            SELECT id, section_title, section_content, page_number, category, guide_source
             FROM guide_sections 
             ORDER BY page_number, id
             LIMIT ?

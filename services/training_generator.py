@@ -19,7 +19,6 @@ class TrainingGenerator:
             logger.info("✅ GigaChat инициализирован")
         except Exception as e:
             logger.error(f"❌ GigaChat недоступен: {e}")
-            # Создаем заглушку для gigachat
             self.gigachat = self._create_gigachat_stub()
 
     def _create_gigachat_stub(self):
@@ -29,7 +28,6 @@ class TrainingGenerator:
                 return []
             
             def generate_simple_lesson(self, section_title, section_content):
-                # Создаем простой урок на основе раздела
                 theory = section_content[:200] + "..." if len(section_content) > 200 else section_content
                 
                 return {
@@ -43,7 +41,7 @@ class TrainingGenerator:
                         "Информация не указана в руководстве"
                     ],
                     "correct_answer": 0,
-                    "explanation": f"Этот раздел содержит информацию из руководства по цифровой грамотности.",
+                    "explanation": f"Этот раздел содержит информацию из учебников по цифровой грамотности.",
                     "difficulty_level": "beginner"
                 }
         
@@ -53,11 +51,11 @@ class TrainingGenerator:
         """Инициализация системы обучения"""
         logger.info("🔄 Инициализация системы обучения...")
 
-        # Парсим руководство
-        sections_count = self.guide_parser.parse_guide_pdf()
+        # Парсим ВСЕ учебники
+        sections_count = self.guide_parser.parse_all_guides()
         
         if sections_count == 0:
-            logger.error("❌ Не удалось распарсить руководство")
+            logger.error("❌ Не удалось распарсить учебники")
             return False
 
         # Генерируем уроки
@@ -69,19 +67,18 @@ class TrainingGenerator:
         return True
 
     def generate_training_lessons(self, num_lessons: int = 10) -> bool:
-        """Генерация уроков обучения"""
+        """Генерация уроков обучения на основе ВСЕХ учебников"""
         try:
-            # Получаем содержание руководства
+            # Получаем содержание ВСЕХ учебников
             guide_content = self.guide_parser.get_guide_content_for_training()
             
             if not guide_content:
-                logger.error("❌ Нет содержания руководства для генерации уроков")
+                logger.error("❌ Нет содержания учебников для генерации уроков")
                 return False
 
             lessons_data = []
 
             if self.gigachat_available:
-                # Пробуем сгенерировать через GigaChat
                 logger.info("🔄 Генерация уроков через GigaChat...")
                 lessons_data = self.gigachat.generate_training_lessons(guide_content, num_lessons)
                 if lessons_data:
@@ -115,7 +112,7 @@ class TrainingGenerator:
             return False
 
     def _generate_simple_lessons(self, num_lessons: int) -> list:
-        """Генерация простых уроков на основе разделов руководства"""
+        """Генерация простых уроков на основе разделов ВСЕХ учебников"""
         sections = self.db.get_guide_sections(limit=num_lessons)
         lessons = []
 
@@ -131,7 +128,7 @@ class TrainingGenerator:
         return lessons
 
     def get_training_data(self) -> list:
-        """Получение данных для обучения"""
+        """Получение данных для обучения из ВСЕХ учебников"""
         lessons = self.db.get_training_lessons(limit=10)
         
         if not lessons:
@@ -155,6 +152,7 @@ class TrainingGenerator:
         logger.info(f"📊 Загружено {len(training_data)} уроков для обучения")
         return training_data
 
-    def check_guide_available(self) -> bool:
-        """Проверка доступности руководства"""
-        return self.guide_parser.check_guide_exists()
+    def check_guides_available(self) -> bool:
+        """Проверка доступности ВСЕХ учебников"""
+        results = self.guide_parser.check_guides_exist()
+        return all(results.values())
