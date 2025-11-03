@@ -5,6 +5,7 @@ import logging
 import re
 import ast
 from dotenv import load_dotenv
+from services.spell_checker import SpellChecker
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -51,7 +52,7 @@ def index():
 
 @app.route('/api/generate-full-test', methods=['POST'])
 def generate_full_test():
-    """Генерация полноценного теста из 5 вопросов по теме - ТОЛЬКО НЕЙРОСЕТЬЮ"""
+    """Генерация полноценного теста из 5 вопросов по теме - С ПРОВЕРКОЙ ОПЕЧАТОК"""
     if not GIGACHAT_AVAILABLE:
         return jsonify({
             'status': 'error',
@@ -60,40 +61,58 @@ def generate_full_test():
 
     try:
         data = request.get_json()
-        topic = data.get('topic', '').strip().lower()
+        original_topic = data.get('topic', '').strip().lower()
         
-        if not topic:
+        if not original_topic:
             return jsonify({
                 'status': 'error',
                 'error': 'Тема не может быть пустой'
             }), 400
 
-        # Проверяем, что тема одна из 5 основных (или их синонимы)
+        # Исправляем опечатки
+        if spell_checker:
+            corrected_topic, was_corrected = spell_checker.correct_spelling(original_topic)
+        else:
+            corrected_topic = original_topic
+            was_corrected = False
+
+        logger.info(f"🎯 Запрос на генерацию теста по теме: '{original_topic}' -> '{corrected_topic}'")
+
+        # Проверяем, что тема одна из основных (или их синонимы)
         allowed_topics = ['компьютер', 'интернет', 'пароли', 'банковские карты', 'электронная почта']
-        topic_synonyms = get_topic_synonyms(topic)
+        topic_synonyms = get_topic_synonyms(corrected_topic)
         
-        if topic not in allowed_topics and not topic_synonyms:
+        if corrected_topic not in allowed_topics and not topic_synonyms:
             return jsonify({
                 'status': 'error',
-                'error': f'Тема "{topic}" не найдена. Доступные темы: компьютер, интернет, пароли, банковские карты, электронная почта'
+                'error': f'Тема "{corrected_topic}" не найдена. Доступные темы: компьютер, интернет, пароли, банковские карты, электронная почта'
             })
 
-        logger.info(f"🎯 Запрос на генерацию полного теста по теме: {topic}")
 
-        # Получаем релевантные разделы из БД
-        relevant_sections = get_relevant_sections(topic)
+
+
+        # Получаем релевантные разделы по ИСПРАВЛЕННОЙ теме
+        relevant_sections = get_relevant_sections(corrected_topic)
         logger.info(f"📚 Найдено релевантных разделов: {len(relevant_sections)}")
         
         if not relevant_sections:
             return jsonify({
                 'status': 'error',
-                'error': f'В руководстве нет информации по теме "{topic}". Попробуйте другую тему из списка: компьютер, интернет, пароли, банковские карты, электронная почта'
+                'error': f'В учебниках нет информации по теме "{corrected_topic}". Попробуйте другую тему из списка.'
             })
 
-        # Генерируем тест ТОЛЬКО нейросетью
-        test_data = generate_contextual_test(topic, relevant_sections)
+        # Генерируем тест по ИСПРАВЛЕННОЙ теме
+        test_data = generate_contextual_test(corrected_topic, relevant_sections)
         
-        logger.info(f"✅ Полный тест создан нейросетью: {len(test_data['questions'])} вопросов")
+        # Добавляем информацию об исправлении в ответ
+        if was_corrected:
+            test_data['correction_info'] = {
+                'was_corrected': True,
+                'original_topic': original_topic,
+                'corrected_topic': corrected_topic
+            }
+        
+        logger.info(f"✅ Тест создан: {len(test_data['questions'])} вопросов")
         
         return jsonify({
             'status': 'success',
@@ -101,10 +120,10 @@ def generate_full_test():
         })
 
     except Exception as e:
-        logger.error(f"❌ Ошибка генерации полного теста: {e}")
+        logger.error(f"❌ Ошибка генерации теста: {e}")
         return jsonify({
             'status': 'error',
-            'error': 'Произошла ошибка при создании теста нейросетью'
+            'error': 'Произошла ошибка при создании теста'
         }), 500
     
 def generate_contextual_test(topic, relevant_sections):
@@ -1181,6 +1200,7 @@ def extract_key_concepts(relevant_sections, topic):
                     concepts.add(concept)
     
     return list(concepts)[:5]
+
 
 
 
@@ -2425,53 +2445,66 @@ def initialize_system():
 
 @app.route('/api/learn-topic', methods=['POST'])
 def learn_topic():
-    """Генерация теоретического объяснения - С ПРИОРИТЕТОМ УЧЕБНИКОВ"""
+    """Генерация теоретического объяснения - С ПРОВЕРКОЙ ОПЕЧАТОК"""
     if not GIGACHAT_AVAILABLE:
         return jsonify({'status': 'error', 'error': 'GigaChat недоступен'}), 503
 
     try:
         data = request.get_json()
-        topic = data.get('topic', '').strip().lower()
+        original_topic = data.get('topic', '').strip()
         
-        if not topic:
+        if not original_topic:
             return jsonify({'status': 'error', 'error': 'Тема не может быть пустой'}), 400
 
-        logger.info(f"🎯 Запрос на изучение темы: {topic}")
+        logger.info(f"🎯 Запрос на изучение темы: '{original_topic}'")
 
-        # Получаем релевантные разделы из ВСЕХ учебников
+        # Исправляем опечатки
+        if spell_checker:
+            corrected_topic, was_corrected = spell_checker.correct_spelling(original_topic)
+            correction_message = spell_checker.format_correction_message(original_topic, corrected_topic, was_corrected)
+        else:
+            corrected_topic = original_topic
+            was_corrected = False
+            correction_message = ""
+
+        # Получаем релевантные разделы по ИСПРАВЛЕННОЙ теме
+        relevant_sections = get_relevant_sections(corrected_topic)
         
-        relevant_sections = get_relevant_sections(topic)
-        
-        
-        # Проверяем покрытие учебников с улучшенной обработкой ошибок
+        # Проверяем покрытие учебников
         try:
-            textbook_ok, coverage_info = check_textbook_coverage(topic, relevant_sections)
+            textbook_ok, coverage_info = check_textbook_coverage(corrected_topic, relevant_sections)
             use_external = not textbook_ok
         except Exception as e:
+           
             logger.error(f"❌ Ошибка проверки покрытия учебников: {e}")
-            # В случае ошибки используем внешние знания для безопасности
+           
             textbook_ok, coverage_info = False, f"Ошибка проверки: {e}"
             use_external = True
 
         logger.info(f"📚 Покрытие учебников: {coverage_info}")
         logger.info(f"🔍 Использование внешних знаний: {use_external}")
 
-        # Генерируем объяснение с правильным приоритетом
-        explanation = generate_contextual_theory(topic, relevant_sections)
+        # Генерируем объяснение по ИСПРАВЛЕННОЙ теме
+        explanation = generate_contextual_theory(corrected_topic, relevant_sections)
         
-
-
         # Дополнительно форматируем, если нужно
         
         if not has_proper_paragraphs(explanation):
-            
-            explanation = format_beautiful_text(explanation, topic)
+            explanation = format_beautiful_text(explanation, corrected_topic)
+        
+        # Объединяем сообщение об исправлении с объяснением
+        full_explanation = correction_message + explanation
         
         logger.info(f"✅ Объяснение создано: {len(explanation)} символов")
         
         return jsonify({
             'status': 'success',
-            'explanation': explanation,
+            'explanation': full_explanation,
+            'correction_info': {
+                'was_corrected': was_corrected,
+                'original_topic': original_topic,
+                'corrected_topic': corrected_topic
+            },
             'sources_used': {
                 'textbooks': len(relevant_sections) > 0,
                 'external_knowledge': use_external,
@@ -2483,6 +2516,13 @@ def learn_topic():
     except Exception as e:
         logger.error(f"❌ Ошибка генерации объяснения: {e}", exc_info=True)
         return jsonify({'status': 'error', 'error': 'Произошла ошибка при генерации объяснения'}), 500
+
+spell_checker = None
+if GIGACHAT_AVAILABLE:
+    spell_checker = SpellChecker(gigachat_service)
+    logger.info("✅ SpellChecker инициализирован")
+else:
+    logger.warning("⚠️ SpellChecker недоступен - GigaChat не инициализирован")
 
 if __name__ == '__main__':
     initialize_system()

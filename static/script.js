@@ -94,38 +94,7 @@ function updateUIForProcessing(processing, message = '') {
     }
 }
 
-// Функция добавления сообщения в чат (оставить без изменений)
-function addMessageToChat(sender, content) {
-    const chatMessages = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    
-    messageDiv.className = `message ${sender}-message`;
-    
-    if (sender === 'bot') {
-        // Форматируем текст помощника
-        const formattedContent = formatBotMessage(content);
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <div class="message-header">
-                    <strong>Помощник:</strong>
-                </div>
-                <div class="message-text">${formattedContent}</div>
-            </div>
-        `;
-    } else {
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <div class="message-header">
-                    <strong>Вы:</strong>
-                </div>
-                <div class="message-text">${escapeHtml(content)}</div>
-            </div>
-        `;
-    }
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+
 
 function formatBotMessage(text) {
     let safeText = escapeHtml(text);
@@ -650,21 +619,29 @@ function showQuizResult(result, selectedIndex) {
 }
 
 // Добавление сообщения в чат
-function addMessageToChat(sender, content) {
+function addMessageToChat(sender, content, isPreformatted = false) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     
     messageDiv.className = `message ${sender}-message`;
     
     if (sender === 'bot') {
-        // Форматируем текст помощника с улучшенной обработкой
-        const formattedContent = formatBotMessage(content);
+        let messageContent;
+        
+        if (isPreformatted) {
+            // Если сообщение уже отформатировано, используем как есть
+            messageContent = content;
+        } else {
+            // Форматируем текст помощника
+            messageContent = formatBotMessage(content);
+        }
+        
         messageDiv.innerHTML = `
             <div class="message-content">
                 <div class="message-header">
                     <strong>Помощник:</strong>
                 </div>
-                <div class="message-text">${formattedContent}</div>
+                <div class="message-text">${messageContent}</div>
             </div>
         `;
     } else {
@@ -673,9 +650,7 @@ function addMessageToChat(sender, content) {
                 <div class="message-header">
                     <strong>Вы:</strong>
                 </div>
-                <div class="message-text">
-                    <p>${escapeHtml(content)}</p>
-                </div>
+                <div class="message-text">${escapeHtml(content)}</div>
             </div>
         `;
     }
@@ -743,8 +718,16 @@ async function sendTopicRequest(topic) {
         const data = await response.json();
         
         if (data.status === 'success') {
-            // Добавляем объяснение помощника
-            addMessageToChat('bot', data.explanation);
+            let explanation = data.explanation;
+            
+            // Если есть информация об исправлении опечатки, форматируем специально
+            if (data.correction_info && data.correction_info.was_corrected) {
+                explanation = formatBotMessageWithCorrection(explanation, data.correction_info);
+                addMessageToChat('bot', explanation, true); // true - сообщение уже отформатировано
+            } else {
+                // Обычное форматирование
+                addMessageToChat('bot', explanation);
+            }
         } else {
             throw new Error(data.error || 'Неизвестная ошибка');
         }
@@ -766,6 +749,26 @@ document.getElementById('messageInput').addEventListener('keypress', function(ev
         sendMessage();
     }
 });
+
+
+function formatBotMessageWithCorrection(text, correctionInfo) {
+    const correctionHeader = `
+        <div class="correction-message">
+            <div class="correction-icon">💡</div>
+            <div class="correction-text">
+                <strong>Возможно, вы имели в виду: "${correctionInfo.corrected_topic}"</strong><br>
+                <em>Исправлено с: "${correctionInfo.original_topic}"</em>
+            </div>
+        </div>
+        <hr class="correction-divider">
+    `;
+    
+    // Форматируем основной текст как обычно
+    const formattedText = formatBotMessage(text);
+    
+    return correctionHeader + formattedText;
+}
+
 
 // Автоматическое увеличение высоты textarea
 document.getElementById('messageInput').addEventListener('input', function() {
