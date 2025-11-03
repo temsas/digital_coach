@@ -98,22 +98,21 @@ function updateUIForProcessing(processing, message = '') {
 
 function formatBotMessage(text) {
     let safeText = escapeHtml(text);
-    
-    // Сначала обрабатываем абзацы - разбиваем по двойным переносам строк
-    let formatted = processParagraphs(safeText);
-    
-    // Затем применяем остальное форматирование
-    formatted = formatted
+    let formatted = safeText
         .replace(/^(.*?:)$/gm, '<div class="message-subtitle">$1</div>')
         .replace(/^(\d+\.\s+.*)$/gm, '<div class="list-item numbered">$1</div>')
         .replace(/^([-•*]\s+.*)$/gm, '<div class="list-item bulleted">$1</div>')
-        .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')
-        .replace(/\n/g, '<br>');
+        .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>');
     
     // Автоматическая нумерация
     formatted = autoNumberLists(formatted);
     
-    return formatted;
+    // Разбиваем на параграфы
+    return formatted.split('\n\n')
+        .map(paragraph => paragraph.trim() ? 
+            (paragraph.includes('class="') ? paragraph : `<p>${paragraph}</p>`) : '')
+        .join('')
+        .replace(/\n/g, '<br>');
 }
 
 function processParagraphs(text) {
