@@ -35,7 +35,7 @@ async function sendMessage() {
     updateUIForProcessing(true);
     
     try {
-        // Добавляем сообщение пользователя в чат
+        // Добавляем сообщение пользователя в чат (прокрутка вниз)
         addMessageToChat('user', `Хочу изучить тему: "${message}"`);
         input.value = '';
         
@@ -56,15 +56,23 @@ async function sendMessage() {
         const data = await response.json();
         
         if (data.status === 'success') {
-            // Добавляем объяснение помощника
-            addMessageToChat('bot', data.explanation);
+            let explanation = data.explanation;
+            
+            // Если есть информация об исправлении опечатки, форматируем специально
+            if (data.correction_info && data.correction_info.was_corrected) {
+                explanation = formatBotMessageWithCorrection(explanation, data.correction_info);
+                addMessageToChat('bot', explanation, true, true); // true - прокрутить к началу
+            } else {
+                // Обычное форматирование с прокруткой к началу
+                addMessageToChat('bot', explanation, false, true); // true - прокрутить к началу
+            }
         } else {
             throw new Error(data.error || 'Неизвестная ошибка');
         }
         
     } catch (error) {
         console.error('❌ Ошибка отправки сообщения:', error);
-        addMessageToChat('bot', '❌ ' + (error.message || 'Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.'));
+        addMessageToChat('bot', '❌ ' + (error.message || 'Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.'), false, true);
     } finally {
         isProcessing = false;
         updateUIForProcessing(false);
@@ -617,8 +625,29 @@ function showQuizResult(result, selectedIndex) {
     quizOptions.appendChild(continueButton);
 }
 
+function scrollToMessageTop(messageElement) {
+    // Прокручиваем к верху сообщения с плавной анимацией
+    messageElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+    });
+    
+    // Дополнительная прокрутка на небольшой отступ для лучшего вида
+    setTimeout(() => {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageRect = messageElement.getBoundingClientRect();
+        const chatRect = chatMessages.getBoundingClientRect();
+        
+        if (messageRect.top < chatRect.top) {
+            chatMessages.scrollTop -= 20; // Небольшой отступ сверху
+        }
+    }, 300);
+}
+
+
 // Добавление сообщения в чат
-function addMessageToChat(sender, content, isPreformatted = false) {
+function addMessageToChat(sender, content, isPreformatted = false, scrollToTop = false) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     
@@ -628,10 +657,11 @@ function addMessageToChat(sender, content, isPreformatted = false) {
         let messageContent;
         
         if (isPreformatted) {
-            // Если сообщение уже отформатировано, используем как есть
+
             messageContent = content;
+            
         } else {
-            // Форматируем текст помощника
+
             messageContent = formatBotMessage(content);
         }
         
@@ -655,7 +685,15 @@ function addMessageToChat(sender, content, isPreformatted = false) {
     }
     
     chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // ИЗМЕНЕНИЕ: Для бот-сообщений прокручиваем к началу, для пользовательских - к концу
+    if (sender === 'bot' && scrollToTop) {
+        // Прокручиваем к началу бот-сообщения
+        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // Стандартное поведение - прокрутка вниз
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 // Обновление UI во время обработки
@@ -687,7 +725,7 @@ function selectTopic(topic) {
     const input = document.getElementById('messageInput');
     input.value = topic;
     
-    // Добавляем сообщение пользователя в чат
+    // Добавляем сообщение пользователя в чат (прокрутка вниз)
     addMessageToChat('user', `Хочу изучить тему: "${topic}"`);
     input.value = '';
     
@@ -722,10 +760,10 @@ async function sendTopicRequest(topic) {
             // Если есть информация об исправлении опечатки, форматируем специально
             if (data.correction_info && data.correction_info.was_corrected) {
                 explanation = formatBotMessageWithCorrection(explanation, data.correction_info);
-                addMessageToChat('bot', explanation, true); // true - сообщение уже отформатировано
+                addMessageToChat('bot', explanation, true, true); // true - сообщение уже отформатировано, true - прокрутить к началу
             } else {
-                // Обычное форматирование
-                addMessageToChat('bot', explanation);
+                // Обычное форматирование с прокруткой к началу
+                addMessageToChat('bot', explanation, false, true); // true - прокрутить к началу
             }
         } else {
             throw new Error(data.error || 'Неизвестная ошибка');
@@ -733,7 +771,7 @@ async function sendTopicRequest(topic) {
         
     } catch (error) {
         console.error('❌ Ошибка отправки сообщения:', error);
-        addMessageToChat('bot', '❌ ' + (error.message || 'Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.'));
+        addMessageToChat('bot', '❌ ' + (error.message || 'Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.'), false, true);
     } finally {
         isProcessing = false;
         updateUIForProcessing(false);
