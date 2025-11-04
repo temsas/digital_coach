@@ -244,6 +244,10 @@ async function startFullTest(topic) {
 
 // Показать экран полного теста
 function showFullTestScreen() {
+    // Сначала очищаем предыдущие данные
+    clearTestData();
+    
+    // Скрываем чат и показываем тест
     document.getElementById('chatScreen').classList.remove('active');
     document.getElementById('fullTestScreen').classList.add('active');
     document.getElementById('fullTestScreen').style.display = 'block';
@@ -255,6 +259,8 @@ function showFullTestScreen() {
     
     // Показываем первый вопрос
     showQuestion(0);
+    
+    logger.info("📊 Экран теста показан, данные очищены");
 }
 
 // Показать вопрос
@@ -480,29 +486,116 @@ function displayExplanation(explanation) {
 
 // Вернуться на главный экран
 function goToMainScreen() {
+    // Скрываем экраны теста и результатов
     document.getElementById('resultsScreen').classList.remove('active');
     document.getElementById('resultsScreen').style.display = 'none';
+    document.getElementById('fullTestScreen').classList.remove('active');
+    document.getElementById('fullTestScreen').style.display = 'none';
+    
+    // Показываем экран чата
     document.getElementById('chatScreen').classList.add('active');
     
-    // Очищаем историю теста
+    // Очищаем данные теста
     currentFullTest = null;
     userTestAnswers = [];
     currentQuestionIndex = 0;
+    
+    // Очищаем DOM-элементы теста
+    clearTestData();
+    
+    // Прокручиваем чат вниз чтобы показать последние сообщения
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    logger.info("🔄 Возврат к главному экрану, данные теста очищены");
 }
+
+function clearTestData() {
+    // Очищаем теорию
+    const theoryContent = document.getElementById('theoryContent');
+    if (theoryContent) {
+        theoryContent.innerHTML = '';
+    }
+    
+    // Очищаем вопросы теста
+    const testQuestions = document.getElementById('testQuestions');
+    if (testQuestions) {
+        testQuestions.innerHTML = '';
+    }
+    
+    // Очищаем прогресс
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+        progressFill.style.width = '0%';
+    }
+    
+    const progressText = document.getElementById('progressText');
+    if (progressText) {
+        progressText.textContent = 'Вопрос 0 из 0';
+    }
+    
+    // Очищаем результаты
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) {
+        scoreDisplay.innerHTML = '';
+    }
+    
+    const resultsDetails = document.getElementById('resultsDetails');
+    if (resultsDetails) {
+        resultsDetails.innerHTML = '';
+    }
+    
+    // Сбрасываем кнопки навигации
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.style.display = 'block';
+    }
+    
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        prevBtn.disabled = true;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.style.display = 'none';
+    }
+}
+
 
 // Пройти тест заново
 function retryTest() {
     if (currentFullTest) {
+        // Очищаем ответы пользователя
         userTestAnswers = new Array(currentFullTest.questions.length).fill(null);
         currentQuestionIndex = 0;
         
+        // Очищаем DOM-элементы результатов
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const resultsDetails = document.getElementById('resultsDetails');
+        if (scoreDisplay) scoreDisplay.innerHTML = '';
+        if (resultsDetails) resultsDetails.innerHTML = '';
+        
+        // Скрываем экран результатов и показываем экран теста
         document.getElementById('resultsScreen').classList.remove('active');
         document.getElementById('resultsScreen').style.display = 'none';
         document.getElementById('fullTestScreen').classList.add('active');
         
+        // Показываем первый вопрос
         showQuestion(0);
+        
+        logger.info("🔄 Тест начат заново");
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🎓 Интерактивный тренажер инициализирован");
+    focusInput();
+    
+    // Очищаем возможные остатки теста при загрузке
+    clearTestData();
+});
 
 // Показать блок с тестом (для одного вопроса)
 function showQuizSection(quiz) {
