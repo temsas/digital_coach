@@ -233,7 +233,7 @@ async function startFullTest(topic) {
         
     } catch (error) {
         console.error('❌ Ошибка генерации теста:', error);
-        alert('❌ Произошла ошибка при создании теста. Пожалуйста, попробуйте еще раз.');
+        
     } finally {
         isProcessing = false;
         updateUIForProcessing(false);
